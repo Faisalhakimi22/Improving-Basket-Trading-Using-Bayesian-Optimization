@@ -128,11 +128,12 @@ class TradingStrategy:
             signal = signals.iloc[i]
             prev_signal = signals.iloc[i - 1]
             
-            # Calculate return from spread reversion
-            # When long spread: profit if spread decreases
-            # When short spread: profit if spread increases
+            # Calculate return from spread reversion over the next period
+            # (spread_returns.iloc[i] is spread[i + 1] - spread[i])
+            # When long spread: profit if spread increases
+            # When short spread: profit if spread decreases
             if signal != 0:
-                spread_return = -spread_returns.iloc[i] * signal
+                spread_return = spread_returns.iloc[i] * signal
                 
                 # Apply transaction cost when position changes
                 if signal != prev_signal and prev_signal != 0:
