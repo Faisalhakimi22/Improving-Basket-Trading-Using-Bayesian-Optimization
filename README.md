@@ -184,6 +184,32 @@ python main.py \
     --n-trials 50
 ```
 
+## Other Optimizers: CMA-ES and TuRBO
+
+`src/optimizers/` adds two alternatives to Bayesian Optimization behind a common interface (`BaseOptimizer`):
+
+- **CMA-ES** (`CMAESOptimizer`): Covariance Matrix Adaptation Evolution Strategy, using the `cma` package
+- **TuRBO** (`TuRBOOptimizer`): Trust Region Bayesian Optimization (TuRBO-1, Eriksson et al., 2019), a local GP with Thompson sampling inside a trust region that grows, shrinks and restarts
+
+Both take the objective from `create_objective_function` and search the same space as `BayesianOptimizer`: n − 1 free weights in [−2, 2], with the last weight normalized to −1. `optimize()` returns `(best_weights, best_score)` and never uses more than `n_trials` objective evaluations.
+
+`src/optimizer_runner.py` runs BO, CMA-ES and TuRBO with the same objective and budget on a training period, then backtests each set of weights on a held-out test period that follows it:
+
+```bash
+python -m src.optimizer_runner \
+    --assets AAPL MSFT GOOGL \
+    --start-date 2020-01-01 \
+    --end-date 2023-12-31 \
+    --n-trials 50 \
+    --test-size 0.25
+```
+
+Tests run on synthetic data without network access:
+
+```bash
+pytest
+```
+
 ## Project Structure
 
 ```
