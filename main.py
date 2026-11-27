@@ -48,7 +48,7 @@ def main():
     )
     parser.add_argument(
         '--transaction-cost', type=float, default=0.001,
-        help='Transaction cost per trade (default: 0.001 = 0.1%%)'
+        help='Transaction cost per trade per unit of gross exposure (default: 0.001 = 0.1%%)'
     )
     parser.add_argument(
         '--optimize-thresholds', action='store_true',

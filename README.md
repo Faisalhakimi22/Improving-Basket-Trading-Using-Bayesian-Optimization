@@ -204,6 +204,18 @@ python -m src.optimizer_runner \
     --test-size 0.25
 ```
 
+`src/walk_forward.py` repeats this across consecutive windows. It re-optimizes on each training window (default 504 days), tests on the next window (default 126 days), and reports the mean and standard deviation of the test metrics across windows. `--anchored` uses an expanding training window instead:
+
+```bash
+python -m src.walk_forward \
+    --assets AAPL MSFT GOOGL \
+    --start-date 2018-01-01 \
+    --end-date 2023-12-31 \
+    --output walk_forward.csv
+```
+
+In both, the end of the training window warms up the rolling z-score, so the strategy can trade from the first test day. Transaction costs are charged per unit of gross exposure (sum of absolute weights).
+
 Tests run on synthetic data without network access:
 
 ```bash
