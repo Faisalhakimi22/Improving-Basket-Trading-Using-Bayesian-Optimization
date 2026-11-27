@@ -114,14 +114,22 @@ class OptimizationRunner:
         return weights, score, optimizer.n_evals
 
     def evaluate(self, weights: np.ndarray) -> Dict:
-        """Backtest weights on the test period."""
-        spread = calculate_spread(self.test_prices, weights)
+        """
+        Backtest weights on the test period.
+
+        The end of the training period warms up the rolling statistics, so the
+        strategy can trade from the first test day and metrics cover the whole
+        test period.
+        """
         strategy = TradingStrategy(
             entry_threshold=self.entry_threshold,
             exit_threshold=self.exit_threshold,
             transaction_cost=self.transaction_cost
         )
-        return strategy.backtest(spread, weights, self.test_prices)
+        warmup = min(strategy.lookback_period, len(self.train_prices))
+        prices = pd.concat([self.train_prices.iloc[len(self.train_prices) - warmup:], self.test_prices])
+        spread = calculate_spread(prices, weights)
+        return strategy.backtest(spread, weights, prices, warmup=warmup)
 
     def run(self, optimizers: Iterable[str] = OPTIMIZERS, verbose: bool = True) -> pd.DataFrame:
         """

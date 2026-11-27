@@ -183,7 +183,7 @@ def create_objective_function(
     exit_threshold : float
         Exit threshold (standard deviations)
     transaction_cost : float
-        Transaction cost per trade (as fraction)
+        Transaction cost per trade, as a fraction of gross exposure
     metric : str
         Performance metric to optimize: 'sharpe', 'return', 'profit_factor'
         

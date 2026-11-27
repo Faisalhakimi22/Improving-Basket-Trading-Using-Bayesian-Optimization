@@ -30,7 +30,8 @@ class TradingStrategy:
         exit_threshold : float
             Exit threshold in standard deviations (mean reversion)
         transaction_cost : float
-            Transaction cost per trade (as fraction)
+            Transaction cost per trade, as a fraction of gross exposure
+            (sum of absolute weights)
         lookback_period : int
             Lookback period for calculating statistics
         """
@@ -116,6 +117,9 @@ class TradingStrategy:
         """
         returns = pd.Series(0.0, index=spread.index)
         prev_signal = 0
+
+        # Trading costs scale with gross exposure, so larger weights pay more
+        cost = self.transaction_cost * np.sum(np.abs(weights))
         
         # Calculate asset returns
         asset_returns = prices.diff().dropna()
@@ -137,15 +141,15 @@ class TradingStrategy:
                 
                 # Apply transaction cost when position changes
                 if signal != prev_signal and prev_signal != 0:
-                    spread_return -= self.transaction_cost * 2  # Exit + enter
+                    spread_return -= cost * 2  # Exit + enter
                 elif signal != prev_signal:
-                    spread_return -= self.transaction_cost  # Enter only
+                    spread_return -= cost  # Enter only
                 
                 returns.iloc[i] = spread_return
             else:
                 # Exit transaction cost if closing position
                 if prev_signal != 0:
-                    returns.iloc[i] = -self.transaction_cost
+                    returns.iloc[i] = -cost
         
         return returns
     
@@ -153,11 +157,12 @@ class TradingStrategy:
         self,
         spread: pd.Series,
         weights: np.ndarray,
-        prices: pd.DataFrame
+        prices: pd.DataFrame,
+        warmup: int = 0
     ) -> dict:
         """
         Run backtest and return performance metrics.
-        
+
         Parameters:
         -----------
         spread : pd.Series
@@ -166,7 +171,10 @@ class TradingStrategy:
             Cointegrating weights
         prices : pd.DataFrame
             Price data
-            
+        warmup : int
+            Leading periods used only to warm up the rolling statistics;
+            metrics are computed on the periods after them
+
         Returns:
         --------
         dict
@@ -178,7 +186,12 @@ class TradingStrategy:
         
         signals = self.generate_signals(spread)
         returns = self.calculate_returns(spread, signals, weights, prices)
-        
+
+        if warmup:
+            spread = spread.iloc[warmup:]
+            signals = signals.iloc[warmup:]
+            returns = returns.iloc[warmup:]
+
         # Calculate metrics
         cumulative_returns = (1 + returns).cumprod()
         
